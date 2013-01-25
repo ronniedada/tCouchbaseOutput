@@ -1,0 +1,55 @@
+<%@ jet imports="
+java.util.List
+org.talend.core.model.process.INode
+org.talend.core.model.process.ElementParameterParser
+org.talend.core.model.metadata.IMetadataTable
+org.talend.core.model.metadata.IMetadataColumn
+org.talend.core.model.process.IConnection
+org.talend.core.model.process.IConnectionCategory
+org.talend.designer.codegen.config.CodeGeneratorArgument
+org.talend.core.model.metadata.types.JavaTypesManager
+org.talend.core.model.metadata.types.JavaType
+org.talend.core.model.process.EConnectionType"
+%>
+
+<%
+CodeGeneratorArgument codeGenArgument = (CodeGeneratorArgument) argument;
+INode node = (INode)codeGenArgument.getArgument();
+String cid = node.getUniqueName();
+
+IMetadataTable metadata = null;
+if ((node.getIncomingConnections() != null) && (node.getIncomingConnections().size() > 0)) {
+	metadata = node.getIncomingConnections().get(0).getMetadataTable();
+	String inRowName = node.getIncomingConnections().get(0).getName();
+	List<IMetadataColumn> columns = metadata.getListColumns();
+
+	for (int i = 0; i < columns.size(); i++) {
+		IMetadataColumn column = columns.get(i);
+%>
+		String <%=column.getLabel()%>_<%=cid %> = <%=inRowName %>.<%=column.getLabel() %>;
+<%
+	}
+}
+
+%>
+
+results_<%=cid %>.add(couchbaseClient_<%=cid %>.set(key_<%=cid %>, expiration_<%=cid %>, value_<%=cid%>));
+
+if (results_<%=cid %>.size() >= batch_<%=cid %>) {
+	for (net.spy.memcached.internal.OperationFuture<Boolean> result: results_<%=cid %>) {
+		try {
+			if (result.get().booleanValue()) {
+				++numSuccess_<%=cid %>;
+			} else {
+				++numError_<%=cid %>;
+			}
+		} catch (InterruptedException e) {
+			System.err.println("InterruptedException while doing set: " + e.getMessage());
+			++numError_<%=cid %>;
+		} catch (java.util.concurrent.ExecutionException e) {
+			System.err.println("ExecutionException while doing set: " + e.getMessage());
+			++numError_<%=cid %>;
+		}
+	}
+	results_<%=cid %>.clear();
+}
