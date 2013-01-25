@@ -35,6 +35,7 @@ if (results_<%=cid %>.size() > 0) {
 }
 
 couchbaseClient_<%=cid%>.shutdown();
-System.out.println("Processed " + (numError_<%=cid %> + numSuccess_<%=cid %>) + " results: " + numSuccess_<%=cid %> + " successes, " + numError_<%=cid %> + " errors.");
+System.out.println("Processed " + (numError_<%=cid %> + numSuccess_<%=cid %>) + 
+				   " results: " + numSuccess_<%=cid %> + " successes, " + numError_<%=cid %> + " errors.");
 
 globalMap.put("<%=cid %>_NB_LINE", nb_line_<%=cid %>);
